@@ -5,8 +5,8 @@ import { BASE_URL } from "./DirectoryView";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: "abdullaansa7317@gmail.com",
-    password: "123456",
+    email: "",
+    password: "",
   });
 
   // serverError will hold the error message from the server

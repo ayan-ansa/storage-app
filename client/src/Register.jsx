@@ -5,9 +5,9 @@ import { BASE_URL } from "./DirectoryView";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: "Abdulla Ansari",
-    email: "abdullaansa7317@gmail.com",
-    password: "123456",
+    name: "",
+    email: "",
+    password: "",
   });
 
   const [serverError, setServerError] = useState("");

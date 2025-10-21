@@ -271,9 +271,6 @@ function DirectoryView() {
     }
   }
 
-  /**
-   * Create a directory
-   */
   async function handleCreateDirectory(e) {
     e.preventDefault();
     setErrorMessage("");
