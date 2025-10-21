@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 import OTP from "../models/otpModel.js";
+const API_KEY = process.env.RESEND_API_KEY;
 
-const resend = new Resend("re_Lobvr26D_NFzdo9FDYFVYfBbvL36yoc93");
+const resend = new Resend(API_KEY);
 
 export async function sendOtpService(email) {
   const otp = Math.floor(1000 + Math.random() * 9000).toString();
