@@ -5,8 +5,8 @@ import { BASE_URL } from "./DirectoryView";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "abdullaansa7317@gmail.com",
+    password: "123456",
   });
 
   // serverError will hold the error message from the server
@@ -20,7 +20,8 @@ const Login = () => {
     // Clear the server error as soon as the user starts typing in either field
     if (serverError) {
       setServerError("");
-    }
+  awaitXSS
+   }
 
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -61,7 +62,7 @@ const Login = () => {
     <div className="container">
       <h2 className="heading">Login</h2>
       <form className="form" onSubmit={handleSubmit}>
-        {/* Email */}
+        
         <div className="form-group">
           <label htmlFor="email" className="label">
             Email
@@ -93,7 +94,6 @@ const Login = () => {
             placeholder="Enter your password"
             required
           />
-          {/* Absolutely-positioned error message below password field */}
           {serverError && <span className="error-msg">{serverError}</span>}
         </div>
 
@@ -102,7 +102,6 @@ const Login = () => {
         </button>
       </form>
 
-      {/* Link to the register page */}
       <p className="link-text">
         Don't have an account? <Link to="/register">Register</Link>
       </p>

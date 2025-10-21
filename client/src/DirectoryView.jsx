@@ -18,32 +18,26 @@ function DirectoryView() {
   const [directoriesList, setDirectoriesList] = useState([]);
   const [filesList, setFilesList] = useState([]);
 
-  // Error state
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Modal states
   const [showCreateDirModal, setShowCreateDirModal] = useState(false);
   const [newDirname, setNewDirname] = useState("New Folder");
 
   const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renameType, setRenameType] = useState(null); // "directory" or "file"
+  const [renameType, setRenameType] = useState(null);
   const [renameId, setRenameId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
 
-  // Uploading states
   const fileInputRef = useRef(null);
-  const [uploadQueue, setUploadQueue] = useState([]); // queued items to upload
-  const [uploadXhrMap, setUploadXhrMap] = useState({}); // track XHR per item
-  const [progressMap, setProgressMap] = useState({}); // track progress per item
-  const [isUploading, setIsUploading] = useState(false); // indicates if an upload is in progress
+  const [uploadQueue, setUploadQueue] = useState([]);
+  const [uploadXhrMap, setUploadXhrMap] = useState({});
+  const [progressMap, setProgressMap] = useState({});
+  const [isUploading, setIsUploading] = useState(false);
 
   // Context menu
   const [activeContextMenu, setActiveContextMenu] = useState(null);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
-  /**
-   * Utility: handle fetch errors
-   */
   async function handleFetchErrors(response) {
     if (!response.ok) {
       let errMsg = `Request failed with status ${response.status}`;
@@ -58,9 +52,6 @@ function DirectoryView() {
     return response;
   }
 
-  /**
-   * Fetch directory contents
-   */
   async function getDirectoryItems() {
     setErrorMessage(""); // clear any existing error
     try {
@@ -86,7 +77,6 @@ function DirectoryView() {
       setErrorMessage(error.message);
     }
   }
-  
 
   useEffect(() => {
     getDirectoryItems();
@@ -130,9 +120,6 @@ function DirectoryView() {
     }
   }
 
-  /**
-   * Click row to open directory or file
-   */
   function handleRowClick(type, id) {
     if (type === "directory") {
       navigate(`/directory/${id}`);
@@ -141,9 +128,6 @@ function DirectoryView() {
     }
   }
 
-  /**
-   * Select multiple files
-   */
   function handleFileSelect(e) {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length === 0) return;

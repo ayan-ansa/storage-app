@@ -1,15 +1,12 @@
 import User from "../models/userModel.js";
 import Directory from "../models/directoryModel.js";
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 import Session from "../models/sessionModel.js";
 
 export const registerUser = async (req, res, next) => {
   const { name, email, password } = req.body;
   const session = await mongoose.startSession();
   try {
-    const hashedPassword = await bcrypt.hash(password, 12);
-
     const rootDirId = new mongoose.Types.ObjectId();
     const userId = new mongoose.Types.ObjectId();
 
@@ -30,7 +27,7 @@ export const registerUser = async (req, res, next) => {
         _id: userId,
         name,
         email,
-        password: hashedPassword,
+        password,
         rootDirId,
       },
       { session }
@@ -48,6 +45,7 @@ export const registerUser = async (req, res, next) => {
         .status(409)
         .json({ error: "User with this email already exists" });
     } else {
+      console.log(err);
       next(err);
     }
   } finally {
@@ -60,7 +58,6 @@ export const loginUser = async (req, res, next) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "Invalid Credentials" });
-
     const isValidPassword = await user.comparePassword(password);
 
     if (!isValidPassword) {

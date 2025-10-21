@@ -5,6 +5,7 @@ import directoryRoutes from "./routes/directoryRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import checkAuth from "./middlewares/authMiddleware.js";
+import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/db.js";
 
 const secretKey = "my-secret-key";
@@ -25,6 +26,7 @@ app.use(
 app.use("/directory", checkAuth, directoryRoutes);
 app.use("/file", checkAuth, fileRoutes);
 app.use("/user", userRoutes);
+app.use("/auth", authRoutes);
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: "Something went wrong!" });
