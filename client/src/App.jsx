@@ -1,30 +1,11 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import DirectoryView from "./DirectoryView";
-import Register from "./Register";
-import "./App.css";
-import Login from "./Login";
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <DirectoryView />,
-  },
-  {
-    path: "/register",
-    element: <Register />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/directory/:dirId",
-    element: <DirectoryView />,
-  },
-]);
+import Home from "./pages/Home";
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950">
+      <Home />
+    </div>
+  );
 }
 
 export default App;
