@@ -1,17 +1,21 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
 
-const fileSchema = new Schema(
+const fileSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    extension: { type: String, required: true },
-    userId: { type: Schema.Types.ObjectId, required: true },
+    filename: { type: String, required: true },
+    path: { type: String, required: true },
+    mimeType: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, required: true },
     parentDirId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
+    size: { type: Number, required: true },
   },
-  { strict: "throw" }
+  { timestamps: true },
+  { strict: "throw" },
 );
 
-const File = model("File", fileSchema);
+const File = mongoose.model("File", fileSchema);
 export default File;

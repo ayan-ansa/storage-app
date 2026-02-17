@@ -4,11 +4,9 @@ import File from "../models/fileModel.js";
 
 // Create Directory
 export const createDirectory = async (req, res, next) => {
-  const { user, params, headers } = req;
+  const parentDirId = req.params.parentDirId || req.user.rootDirId;
 
-  const parentDirId = params.parentDirId || user.rootDirId;
-
-  const dirname = headers.dirname || "New Folder";
+  const dirName = req.body.dirname || "New Folder";
 
   try {
     const parentDir = await Directory.findById({
@@ -18,42 +16,51 @@ export const createDirectory = async (req, res, next) => {
     if (!parentDir)
       return res
         .status(404)
-        .json({ message: "Parent Directory Does not exist!" });
+        .json({ success: false, message: "Parent directory not found!" });
 
     await Directory.insertOne({
-      name: dirname,
-      userId: user._id,
+      name: dirName,
+      userId: req.user._id,
       parentDirId,
     });
 
-    res.json("Directory Created Successfully");
+    res.json({ success: true, message: "Directory created successfully" });
   } catch (err) {
     if (err.code === 121)
-      return res.status(400).json({ error: "Please enter a valid value!" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Please enter a valid value!" });
     next(err);
   }
 };
 
 // Get Directory
-export const getDirectory = async (req, res) => {
-  const { user, params } = req;
-  const _id = params.id || user.rootDirId;
+export const getDirectory = async (req, res, next) => {
+  const _id = req.params.id || req.user.rootDirId;
 
   try {
     const directoryData = await Directory.findById({ _id }).lean();
 
     if (!directoryData) {
       return res.status(404).json({
-        error: "Directory not found or you do not have access to it!",
+        success: false,
+        message: "Directory not found or you do not have access to it!",
       });
     }
-    const files = await File.find({ parentDirId: directoryData._id }).lean();
-    const directories = await Directory.find({ parentDirId: _id }).lean();
+    const files = await File.find({ parentDirId: directoryData._id })
+      .select("-__v")
+      .sort({ createdAt: -1 })
+      .lean();
+    const directories = await Directory.find({ parentDirId: _id })
+      .select("-__v")
+      .sort({ createdAt: -1 })
+      .lean();
 
-    return res.json({
+    return res.status(200).json({
+      success: true,
       ...directoryData,
-      files: files.map((file) => ({ ...file, id: file._id })),
-      directories: directories.map((dir) => ({ ...dir, id: dir._id })),
+      files: files.map((file) => ({ ...file, type: "file" })),
+      directories: directories.map((dir) => ({ ...dir, type: "directory" })),
     });
   } catch (err) {
     next(err);
@@ -62,35 +69,37 @@ export const getDirectory = async (req, res) => {
 
 // Rename Directory
 export const renameDirectory = async (req, res, next) => {
-  const { user, params } = req;
-  const { newDirName } = req.body;
-  const id = params.id;
+  const newDirName = req.body.name;
 
   try {
     await Directory.findOneAndUpdate(
-      { _id: id, userId: user._id },
-      { name: newDirName }
+      { _id: req.params.id, userId: req.user._id },
+      { name: newDirName },
     );
-    res.status(200).json("Directory Renamed Successfully");
+    res
+      .status(200)
+      .json({ success: true, message: "Directory renamed successfully" });
   } catch (err) {
     if (err.code === 121)
-      return res.status(400).json({ error: "Please enter a valid value!" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Please enter a valid value!" });
     next(err);
   }
 };
 
 // Delete Directory
 export const deleteDirectory = async (req, res, next) => {
-  const { user, params } = req;
-  const id = params.id;
-
+  const id = req.params.id;
   const directoryCount = await Directory.countDocuments({
     _id: id,
-    userId: user._id,
+    userId: req.user._id,
   });
 
   if (!directoryCount)
-    return res.status(404).json({ message: "Directory not found!" });
+    return res
+      .status(404)
+      .json({ success: false, message: "Directory not found!" });
 
   try {
     const getDirectoryData = async (dirId) => {
@@ -99,7 +108,7 @@ export const deleteDirectory = async (req, res, next) => {
         .lean();
 
       const files = await File.find({ parentDirId: dirId })
-        .select("extension")
+        .select("filename")
         .lean();
 
       let dirsToDelete = [...directories];
@@ -124,11 +133,13 @@ export const deleteDirectory = async (req, res, next) => {
       _id: { $in: files.map(({ _id }) => _id) },
     });
 
-    for (const { _id, extension } of files) {
-      await rm(`./storage/${_id}${extension}`, { force: true });
+    for (const { filename } of files) {
+      await rm(`./storage/${filename}`, { force: true });
     }
 
-    res.status(200).json({ message: "Directory deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Directory deleted successfully" });
   } catch (error) {
     next(error);
   }

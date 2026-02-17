@@ -1,17 +1,19 @@
-import { Schema, model } from "mongoose";
+import mongoose from "mongoose";
 
-const directorySchema = new Schema(
+const directorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    userId: { type: Schema.Types.ObjectId, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, required: true },
     parentDirId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       default: null,
       ref: "Directory",
     },
+    size: { type: Number, default: 0 },
   },
-  { strict: "throw" }
+  { timestamps: true },
+  { strict: "throw" },
 );
 
-const Directory = model("Directory", directorySchema);
+const Directory = mongoose.model("Directory", directorySchema);
 export default Directory;

@@ -1,50 +1,57 @@
-import { createWriteStream } from "fs";
 import { rm } from "fs/promises";
 import path from "path";
+import fs from "fs";
 import File from "../models/fileModel.js";
 import Directory from "../models/directoryModel.js";
 
 export const uploadFile = async (req, res, next) => {
-  const { user, params, headers } = req;
-  const parentDirId = params.parentDirId || user.rootDirId;
-
   try {
+    const parentDirId = req.params.parentDirId || req.user.rootDirId;
+
     const parentDirData = await Directory.findOne({
       _id: parentDirId,
-      userId: user._id,
+      userId: req.user._id,
     });
 
     if (!parentDirData) {
-      return res.status(404).json({ error: "Parent directory not found!" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Parent directory not found!" });
     }
 
-    const filename = headers.filename || "untitled";
-    const extension = path.extname(filename);
+    // Normalize single & multiple
+    const files = req.files || [req.file];
 
-    const { _id } = await File.insertOne({
-      name: filename,
-      extension,
-      parentDirId,
-      userId: user._id,
-    });
+    if (!files.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
 
-    const filePath = `${_id}${extension}`;
+    for (const file of files) {
+      console.log("Processing file:", file);
+      const { originalname, filename, path, mimetype, size, id } = file;
 
-    const writeStream = createWriteStream(`./storage/${filePath}`);
-    req.pipe(writeStream);
+      await File.create({
+        _id: id,
+        name: originalname,
+        filename,
+        path,
+        mimeType: mimetype,
+        size,
+        parentDirId,
+        userId: req.user._id,
+      });
+    }
 
-    req.on("end", async () => {
-      return res.status(201).json("File Uploaded Successfully");
-    });
-
-    req.on("error", async (error) => {
-      writeStream.destroy();
-      await rm(`./storage/${_id}${extension}`, { force: true });
-      await File.deleteOne({ _id });
-      next(error);
+    res.status(201).json({
+      success: true,
+      message: "File(s) uploaded successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.log("Error in uploadFile controller:", error);
+    next(error);
   }
 };
 
@@ -58,60 +65,72 @@ export const getFile = async (req, res) => {
       userId: user._id,
     });
 
-    if (!fileData) return res.status(404).json({ error: "File not Found!" });
+    if (!fileData)
+      return res
+        .status(404)
+        .json({ success: false, message: "File not Found!" });
 
-    const filePath = `${process.cwd()}/storage/${id}${fileData.extension}`;
+    const filePath = path.join(process.cwd(), "storage", fileData.filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "File missing on server",
+      });
+    }
+
     if (req.query.action === "download") {
       return res.download(filePath, fileData.name);
     }
 
-    return res.sendFile(filePath, (err) => {
-      if (!res.headersSent && err) {
-        return res.json({ error: "Page Not Found!" });
-      }
-    });
+    return res.sendFile(filePath);
   } catch (error) {
-   next(error);
+    next(error);
   }
 };
 
 export const renameFile = async (req, res, next) => {
-  const { params, body, user } = req;
-  const id = params.id;
+  const id = req.params.id;
+  const newFileName = req.body.name;
 
   try {
     const file = await File.findOne({
       _id: id,
-      userId: user._id,
+      userId: req.user._id,
     });
-    if (!file) return res.status(404).json({ error: "File not Found!" });
+    if (!file)
+      return res
+        .status(404)
+        .json({ success: false, message: "File not Found!" });
 
-    file.name = body.newFileName;
+    file.name = newFileName;
     file.save();
 
-    return res.status(200).json("File Renamed Successfully");
+    return res
+      .status(200)
+      .json({ success: true, message: "File renamed successfully" });
   } catch (err) {
-    err.status = 500;
     next(err);
   }
 };
 
 export const deleteFile = async (req, res, next) => {
-  const { params, user } = req;
-  const id = params.id;
-
+  const id = req.params.id;
   try {
     const file = await File.findOne({
       _id: id,
-      userId: user._id,
-    }).select("extension");
+      userId: req.user._id,
+    }).select("filename");
 
-    if (!file) return res.status(404).json({ error: "File not found!" });
+    if (!file)
+      return res
+        .status(404)
+        .json({ success: false, message: "File not found!" });
 
-    await rm(`./storage/${id}${file.extension}`, { force: true });
+    await rm(`./storage/${file.filename}`, { force: true });
     await file.deleteOne();
 
-    return res.json("File Deleted Successfully");
+    return res.json({ success: true, message: "File deleted successfully" });
   } catch (error) {
     next(error);
   }
